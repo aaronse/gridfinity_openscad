@@ -28,6 +28,12 @@ default_half_pitch = false;
 default_lip_style = "normal";
 // Limit attachments (magnets and scres) to box corners for faster printing.
 box_corner_attachments_only = false;
+// Label recess depth, use to increase tolerance for top of label.  Useful if printing 
+// gridfinity cubes when printer tuning and experiencing poor cooling resulting in lift 
+// or warping, but still want a usable cube.
+// Zack's design is 0mm
+label_recess = 1.5;
+
 basic_cup(
   num_x=2,
   num_y=1,
@@ -74,10 +80,21 @@ module basic_cup(
   
   difference() {
     grid_block(num_x, num_y, num_z, magnet_diameter, screw_depth, hole_overhang_remedy=hole_overhang_remedy, half_pitch=half_pitch, box_corner_attachments_only=box_corner_attachments_only);
-    color("red") partitioned_cavity(num_x, num_y, num_z, withLabel=withLabel,
-    labelWidth=labelWidth, fingerslide=fingerslide, magnet_diameter=magnet_diameter, 
-    screw_depth=screw_depth, floor_thickness=floor_thickness, wall_thickness=wall_thickness,
-    efficient_floor=efficient_floor, separator_positions=separator_positions, lip_style=lip_style);
+    color("red") 
+    partitioned_cavity(
+      num_x,
+      num_y,
+      num_z,
+      withLabel=withLabel,
+      labelWidth=labelWidth,
+      fingerslide=fingerslide,
+      magnet_diameter=magnet_diameter, 
+      screw_depth=screw_depth,
+      floor_thickness=floor_thickness,
+      wall_thickness=wall_thickness,
+      efficient_floor=efficient_floor,
+      separator_positions=separator_positions,
+      lip_style=lip_style);
   }
 }
 
@@ -100,6 +117,7 @@ module irregular_cup(
   separator_positions=[],
   lip_style=default_lip_style
   ) {
+		
   difference() {
     grid_block(num_x, num_y, num_z, magnet_diameter, screw_depth, hole_overhang_remedy=hole_overhang_remedy, half_pitch=half_pitch, box_corner_attachments_only=box_corner_attachments_only);
     color("red") partitioned_cavity(num_x, num_y, num_z, withLabel=withLabel,
@@ -110,11 +128,21 @@ module irregular_cup(
 }
 
 
-module partitioned_cavity(num_x, num_y, num_z, withLabel=default_withLabel, 
-    labelWidth=default_labelWidth, fingerslide=default_fingerslide, 
-    magnet_diameter=default_magnet_diameter, screw_depth=default_screw_depth, 
-    floor_thickness=default_floor_thickness, wall_thickness=default_wall_thickness,
-    efficient_floor=default_efficient_floor, separator_positions=[], lip_style=default_lip_style) {
+module partitioned_cavity(
+  num_x,
+  num_y,
+  num_z,
+  withLabel=default_withLabel, 
+  labelWidth=default_labelWidth,
+  fingerslide=default_fingerslide, 
+  magnet_diameter=default_magnet_diameter,
+  screw_depth=default_screw_depth, 
+  floor_thickness=default_floor_thickness,
+  wall_thickness=default_wall_thickness,
+  efficient_floor=default_efficient_floor,
+  separator_positions=[],
+  lip_style=default_lip_style) {
+		
   // cavity with removed segments so that we leave dividing walls behind
   gp = gridfinity_pitch;
   outer_wall_th = 1.8;  // cavity is this far away from the 42mm 'ideal' block
@@ -131,9 +159,17 @@ module partitioned_cavity(num_x, num_y, num_z, withLabel=default_withLabel,
   cavity_xsize = gp*num_x-2*outer_wall_th;
 
   difference() {
-    basic_cavity(num_x, num_y, num_z, fingerslide=fingerslide, magnet_diameter=magnet_diameter,
-    screw_depth=screw_depth, floor_thickness=floor_thickness, wall_thickness=wall_thickness,
-    efficient_floor=efficient_floor, lip_style=lip_style);
+    basic_cavity(
+      num_x,
+      num_y,
+      num_z,
+      fingerslide=fingerslide,
+      magnet_diameter=magnet_diameter,
+      screw_depth=screw_depth,
+      floor_thickness=floor_thickness,
+      wall_thickness=wall_thickness,
+      efficient_floor=efficient_floor,
+      lip_style=lip_style);
     
     if (len(separator_positions) > 0) {
       for (i=[0:len(separator_positions)-1]) {
@@ -161,7 +197,10 @@ module partitioned_cavity(num_x, num_y, num_z, withLabel=default_withLabel,
                         : 0 ;
 
         hull() for (i=[0,1, 2])
-        translate([(-gridfinity_pitch/2) + ((chamberStart + label_pos_x) * gridfinity_pitch), yz[i][0], yz[i][1]])
+        translate([
+          (-gridfinity_pitch/2) + ((chamberStart + label_pos_x) * gridfinity_pitch),
+          yz[i][0],
+          -label_recess + yz[i][1]])
         rotate([0, 90, 0])
         union(){
             tz(abs(label_num_x)*gridfinity_pitch)
@@ -174,10 +213,18 @@ module partitioned_cavity(num_x, num_y, num_z, withLabel=default_withLabel,
 }
 
 
-module basic_cavity(num_x, num_y, num_z, fingerslide=default_fingerslide, 
-    magnet_diameter=default_magnet_diameter, screw_depth=default_screw_depth, 
-    floor_thickness=default_floor_thickness, wall_thickness=default_wall_thickness,
-    efficient_floor=default_efficient_floor, lip_style=default_lip_style) {
+module basic_cavity(
+  num_x,
+  num_y,
+  num_z,
+  fingerslide=default_fingerslide, 
+  magnet_diameter=default_magnet_diameter,
+  screw_depth=default_screw_depth,
+  floor_thickness=default_floor_thickness,
+  wall_thickness=default_wall_thickness,
+  efficient_floor=default_efficient_floor,
+  lip_style=default_lip_style) {
+
   eps = 0.1;
   // I couldn't think of a good name for this ('q') but effectively it's the
   // size of the overhang that produces a wall thickness that's less than the lip
