@@ -145,35 +145,60 @@ module pad_oversize(num_x=1, num_y=1, margins=0) {
   // female parts are a bit oversize for a nicer fit
   radialgap = margins ? 0.25 : 0;  // oversize cylinders for a bit of clearance
   axialdown = margins ? 0.1 : 0;   // a tiny bit of axial clearance present in Zack's design
-  
+
   small_radius = 1.6;
-  med_radius = small_radius * 2;
-  big_radius = med_radius * 2.34375;
-	
+  med_radius = 3.2;
+  big_radius = 7.5;
+  block_corner_outer_radius = big_radius;
+
+  // Use to enable containers to fit trays CNC carved with 1/4" bit
+  bottom_radius = margins ? small_radius : 3.175;
+  bottom_radius_offset = (bottom_radius - small_radius) / 2;
+  	
   translate([0, 0, -axialdown])
   difference() {
     union() {
+      // Pad upper taper
+      color("purple")
       hull() cornercopy(pad_corner_position, num_x, num_y) {
+        if (sharp_corners) {
+          translate([0, 0, bevel2_bottom]) 
+          cylsq2(d1=med_radius+2*radialgap, d2=block_corner_outer_radius+0.5+2*radialgap+2*bonus_ht, h=bevel2_top-bevel2_bottom+bonus_ht);
+        }
+        else {
+          translate([0, 0, bevel2_bottom]) 
+          cylinder(d1=med_radius+2*radialgap, d2=block_corner_outer_radius+0.5+2*radialgap+2*bonus_ht, h=bevel2_top-bevel2_bottom+bonus_ht, $fn=32);
+        }
+      }
+      
+      // Pad mid vertical
+      color("blue")
+      hull() 
+      cornercopy(pad_corner_position, num_x, num_y) 
+      {
         if (sharp_corners) {
           cylsq(d=small_radius+2*radialgap, h=0.1);
           translate([0, 0, bevel1_top]) cylsq(d=med_radius+2*radialgap, h=1.9);
         }
         else {
-          cylinder(d=small_radius+2*radialgap, h=0.1, $fn=24);
           translate([0, 0, bevel1_top]) cylinder(d=med_radius+2*radialgap, h=1.9, $fn=32);
         }
       }
-      
-      hull() cornercopy(pad_corner_position, num_x, num_y) {
-        if (sharp_corners) {
-          translate([0, 0, bevel2_bottom]) 
-          cylsq2(d1=med_radius+2*radialgap, d2=big_radius+0.5+2*radialgap+2*bonus_ht, h=bevel2_top-bevel2_bottom+bonus_ht);
+
+      // Pad lower taper
+      color("green")
+      hull()
+      union()
+      {
+        cornercopy(pad_corner_position, num_x, num_y) 
+        {
+          translate([0, 0, bevel1_top]) cylinder(d=med_radius+2*radialgap, h=0.1, $fn=32);
         }
-        else {
-          translate([0, 0, bevel2_bottom]) 
-          cylinder(d1=med_radius+2*radialgap, d2=big_radius+0.5+2*radialgap+2*bonus_ht, h=bevel2_top-bevel2_bottom+bonus_ht, $fn=32);
+        cornercopy(pad_corner_position - bottom_radius_offset, num_x, num_y) 
+        {  
+          cylinder(d=bottom_radius+2*radialgap, h=bevel1_top, $fn=32);
         }
-      }
+      }          
     }
     
     // cut off bottom if we're going to go negative
